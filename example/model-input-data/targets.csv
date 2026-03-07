@@ -1,0 +1,9 @@
+antibody,antigen,classification_label
+antibody1,antigen1,1
+antibody2,antigen1,0
+antibody3,antigen1,1
+antibody4,antigen1,0
+antibody1,antigen2,0
+antibody2,antigen2,0
+antibody3,antigen2,0
+antibody4,antigen2,0

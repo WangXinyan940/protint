@@ -1,0 +1,1 @@
+pixi run uv pip install torch torch_geometric pytorch-lightning

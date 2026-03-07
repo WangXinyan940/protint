@@ -1,0 +1,17 @@
+# pixi environments
+.pixi/
+!.pixi/config.toml
+pixi.lock
+
+lightning_logs/
+example/output/
+
+debug/
+build/
+dist/
+docs/
+.claude/
+
+*.egg-info/
+__pycache__/
+checkpoints/
