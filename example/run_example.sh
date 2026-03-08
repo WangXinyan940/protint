@@ -25,6 +25,10 @@ MPNN_MODEL="$PROJECT_ROOT/checkpoints/v_48_020.pt"
 
 # 训练配置
 CHECKPOINT_DIR="$OUTPUT_DIR/checkpoints"
+
+# 数据划分配置
+VAL_RATIO=0.25
+RANDOM_SEED=42
 BATCH_SIZE=2
 EPOCHS=10
 LEARNING_RATE=0.0001
@@ -88,14 +92,18 @@ echo "  protint embed \\"
 echo "    --input $DATA_DIR \\"
 echo "    --output $EMBED_OUTPUT_DIR \\"
 echo "    --esm $ESM_MODEL \\"
-echo "    --mpnn $MPNN_MODEL"
+echo "    --mpnn $MPNN_MODEL \\"
+echo "    --val-ratio $VAL_RATIO \\"
+echo "    --seed $RANDOM_SEED"
 echo ""
 
 protint embed \
     --input "$DATA_DIR" \
     --output "$EMBED_OUTPUT_DIR" \
     --esm "$ESM_MODEL" \
-    --mpnn "$MPNN_MODEL"
+    --mpnn "$MPNN_MODEL" \
+    --val-ratio "$VAL_RATIO" \
+    --seed "$RANDOM_SEED"
 
 echo ""
 echo "嵌入生成完成！"
@@ -111,7 +119,7 @@ print_header "步骤 2: 训练预测模型 (Train)"
 print_step "运行 train 命令训练模型"
 echo "命令："
 echo "  protint train \\"
-echo "    --train-dir $EMBED_OUTPUT_DIR \\"
+echo "    --data-dir $EMBED_OUTPUT_DIR \\"
 echo "    --batch-size $BATCH_SIZE \\"
 echo "    --epochs $EPOCHS \\"
 echo "    --lr $LEARNING_RATE \\"
@@ -122,7 +130,7 @@ echo "    --checkpoint-dir $CHECKPOINT_DIR"
 echo ""
 
 protint train \
-    --train-dir "$EMBED_OUTPUT_DIR" \
+    --data-dir "$EMBED_OUTPUT_DIR" \
     --batch-size "$BATCH_SIZE" \
     --epochs "$EPOCHS" \
     --lr "$LEARNING_RATE" \

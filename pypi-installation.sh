@@ -1,1 +1,1 @@
-pixi run uv pip install torch torch_geometric pytorch-lightning
+pixi run uv pip install torch torch_geometric pytorch-lightning esm

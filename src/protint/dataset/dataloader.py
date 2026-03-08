@@ -174,21 +174,22 @@ def create_dataloader(
 
 
 class PairDataset(Dataset):
-    """Dataset for loading antigen-antibody pairs from pkl files and pairs.csv.
+    """Dataset for loading antigen-antibody pairs from pkl files and CSV file.
 
     Each sample is a pair of antigen and antibody with optional labels.
     Rows with classification_label=-1 are filtered out (not included in the dataset).
 
     Args:
-        data_dir: Directory containing pkl files and pairs.csv
+        data_dir: Directory containing pkl files
+        csv_file: Name of the CSV file (default: "pairs.csv")
     """
 
-    def __init__(self, data_dir: str):
+    def __init__(self, data_dir: str, csv_file: str = "pairs.csv"):
         self.data_dir = data_dir
-        self.pairs_csv = os.path.join(data_dir, "pairs.csv")
+        self.pairs_csv = os.path.join(data_dir, csv_file)
 
         if not os.path.exists(self.pairs_csv):
-            raise FileNotFoundError(f"pairs.csv not found in {data_dir}")
+            raise FileNotFoundError(f"{csv_file} not found in {data_dir}")
 
         self.pairs_df = pd.read_csv(self.pairs_csv)
         # Filter out rows with classification_label=-1 (no label available)
@@ -265,19 +266,21 @@ def create_pair_dataloader(
     batch_size: int = 1,
     shuffle: bool = True,
     num_workers: int = 0,
+    csv_file: str = "pairs.csv",
 ) -> DataLoader:
     """Create a DataLoader for antigen-antibody pairs dataset.
 
     Args:
-        data_dir: Directory containing pkl files and pairs.csv
+        data_dir: Directory containing pkl files and CSV file
         batch_size: Batch size
         shuffle: Whether to shuffle data
         num_workers: Number of data loading workers
+        csv_file: Name of the CSV file (default: "pairs.csv")
 
     Returns:
         PyTorch DataLoader
     """
-    dataset = PairDataset(data_dir)
+    dataset = PairDataset(data_dir, csv_file=csv_file)
 
     dataloader = DataLoader(
         dataset,

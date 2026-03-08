@@ -167,6 +167,60 @@ def predict_pkl(
     return result
 
 
+def save_results(
+    results: List[Dict[str, Any]],
+    output_path: str,
+) -> None:
+    """Save prediction results to file in the specified format.
+
+    Args:
+        results: List of prediction results
+        output_path: Path to save results. Format is inferred from extension:
+            - .pkl: pickle format
+            - .csv: CSV format (flattened, excludes vector columns)
+            - .json: JSON format
+    """
+    from pathlib import Path
+
+    path = Path(output_path)
+    suffix = path.suffix.lower()
+
+    if suffix == '.pkl':
+        with open(output_path, 'wb') as f:
+            pickle.dump(results, f)
+    elif suffix == '.csv':
+        import pandas as pd
+        # Flatten results for CSV, exclude large vector columns
+        flat_results = []
+        for r in results:
+            flat = {k: v for k, v in r.items() if k not in ['antigen_vec', 'antibody_vec']}
+            flat_results.append(flat)
+        df = pd.DataFrame(flat_results)
+        df.to_csv(output_path, index=False)
+    elif suffix == '.json':
+        # Convert numpy arrays to lists for JSON serialization
+        import json
+        json_results = []
+        for r in results:
+            json_r = {}
+            for k, v in r.items():
+                if isinstance(v, dict):
+                    json_r[k] = {kk: float(vv) if isinstance(vv, (float, int)) else vv for kk, vv in v.items()}
+                elif hasattr(v, 'tolist'):
+                    json_r[k] = v.tolist()
+                else:
+                    json_r[k] = v
+            json_results.append(json_r)
+        with open(output_path, 'w') as f:
+            json.dump(json_results, f, indent=2)
+    else:
+        # Default to pickle
+        with open(output_path, 'wb') as f:
+            pickle.dump(results, f)
+
+    print(f"Results saved to: {output_path} (format: {suffix if suffix in ['.pkl', '.csv', '.json'] else 'pkl'})")
+
+
 def predict_directory(
     model: Any,
     data_dir: str,
@@ -181,7 +235,7 @@ def predict_directory(
     Args:
         model: Trained LightningModule
         data_dir: Directory containing pkl files (each should contain antigen-antibody pair)
-        output_path: Optional path to save results (pkl format)
+        output_path: Optional path to save results. Format inferred from extension (.pkl, .csv, .json)
         device: Device for inference
 
     Returns:
@@ -199,9 +253,7 @@ def predict_directory(
 
     # Save results if output path specified
     if output_path:
-        with open(output_path, 'wb') as f:
-            pickle.dump(results, f)
-        print(f"Results saved to: {output_path}")
+        save_results(results, output_path)
 
     return results
 
@@ -211,23 +263,25 @@ def predict_pairs_directory(
     data_dir: str,
     output_path: Optional[str] = None,
     device: Optional[str] = None,
+    csv_file: str = "pairs.csv",
 ) -> List[Dict[str, Any]]:
-    """Run prediction on all pairs in a dataset directory with pairs.csv.
+    """Run prediction on all pairs in a dataset directory with CSV file.
 
     Args:
         model: Trained LightningModule
-        data_dir: Directory containing pkl files and pairs.csv
-        output_path: Optional path to save results (pkl format)
+        data_dir: Directory containing pkl files and CSV file
+        output_path: Optional path to save results. Format inferred from extension (.pkl, .csv, .json)
         device: Device for inference
+        csv_file: Name of the CSV file (default: "pairs.csv")
 
     Returns:
         List of prediction results with pair identifiers
     """
     import pandas as pd
 
-    pairs_csv = Path(data_dir) / "pairs.csv"
+    pairs_csv = Path(data_dir) / csv_file
     if not pairs_csv.exists():
-        raise FileNotFoundError(f"pairs.csv not found in {data_dir}")
+        raise FileNotFoundError(f"{csv_file} not found in {data_dir}")
 
     pairs_df = pd.read_csv(pairs_csv)
 
@@ -257,9 +311,7 @@ def predict_pairs_directory(
 
     # Save results if output path specified
     if output_path:
-        with open(output_path, 'wb') as f:
-            pickle.dump(results, f)
-        print(f"Results saved to: {output_path}")
+        save_results(results, output_path)
 
     return results
 
@@ -272,7 +324,7 @@ def main():
     parser = argparse.ArgumentParser(description='Predict antigen-antibody interactions')
     parser.add_argument('-c', '--checkpoint', required=True, help='Path to model checkpoint')
     parser.add_argument('-i', '--input', required=True, help='Input pkl file or directory')
-    parser.add_argument('-o', '--output', help='Output file for results (pkl format)')
+    parser.add_argument('-o', '--output', help='Output file for results (.pkl, .csv, or .json)')
     parser.add_argument('--device', choices=['cpu', 'cuda'], help='Device for inference')
 
     args = parser.parse_args()
@@ -293,9 +345,7 @@ def main():
         print(f"Classification probability: {result['classification_prob']:.4f}")
 
         if args.output:
-            with open(args.output, 'wb') as f:
-                pickle.dump([result], f)
-            print(f"Results saved to: {args.output}")
+            save_results([result], args.output)
 
 
 if __name__ == '__main__':
