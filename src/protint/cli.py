@@ -38,7 +38,7 @@ def parse_pdb_dataset(args: argparse.Namespace):
     if not targets_path.exists():
         raise FileNotFoundError(f"targets.csv not found in {dataset_dir}")
 
-    targets_df = pd.read_csv(targets_path)
+    targets_df = pd.read_csv(targets_path, dtype={"antibody": str, "antigen": str})
 
     # Get unique antigen and antibody names
     unique_antigens = set(targets_df['antigen'].unique())

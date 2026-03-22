@@ -67,16 +67,16 @@ def parse_pdb_file(
 
     # Concatenate all node features: ESM-C (960) + ProteinMPNN (128) + IMGT region (7) + chain type (3)
     sum_node_feat = torch.cat([
-        sequence_features,      # (L_total, 960)
-        node_features,          # (L_total, 128)
-        imgt_region_cat,        # (L_total, 7)
-        imgt_chain_type_cat,    # (L_total, 3)
+        sequence_features.cpu(),      # (L_total, 960)
+        node_features.cpu(),          # (L_total, 128)
+        imgt_region_cat.cpu(),        # (L_total, 7)
+        imgt_chain_type_cat.cpu(),    # (L_total, 3)
     ], dim=1)  # (L_total, 1098)
 
     return {
-        'node_features': sum_node_feat,
-        'edge_features': edge_features,
-        'edge_indices': edge_indices,
-        'imgt_numbers': imgt_numbers_cat,  # (L_total,) IMGT sequence labels
+        'node_features': sum_node_feat.cpu(),
+        'edge_features': edge_features.cpu(),
+        'edge_indices': edge_indices.cpu(),
+        'imgt_numbers': imgt_numbers_cat.cpu(),  # (L_total,) IMGT sequence labels
         'chain_order': chain_order,  # List of chain IDs in order
     }
